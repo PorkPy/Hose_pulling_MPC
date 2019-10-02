@@ -3,12 +3,15 @@ import socket
 import time
 import struct
 import cPickle as pickle
+import numpy as np
+from pprint import pprint
+import math
 
 HOST = "123.124.125.11" # The remote host
 PORT_30003 = 30003
 
 def where_now():
-
+	print ""
 	print "Starting where_now"
 
 	count = 0
@@ -94,7 +97,8 @@ def where_now():
 	with open('ur_data.pickle', "wb") as ur_file:
 		pickle.dump(pose, ur_file, -1)
 
-	print "End of where_now"
+
+	print "Return Robot Pose", pose
 	return pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"]
 
 
@@ -102,6 +106,146 @@ def where_now():
 
 
 if __name__ == '__main__':
-    pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"] = where_now()
-    print pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"]
 
+
+	print ""
+
+	pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"] = where_now()
+	print pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"]
+	print ""
+
+
+	home_pos_x = 0.3
+	home_pos_y = -0.65
+
+	x = pose["x"]
+	y = pose["y"]
+
+	offset_pose_x = x - home_pos_x
+	offset_pose_y = y - home_pos_y
+	
+
+	x_interval = 0.25
+	y_interval = -0.25
+	
+	''' As the robot base frame is not lined up square with the task frame, 
+	there needs to be some maths magic to get the task coordinates 
+	back into the robot frame.
+	if the robot moves 1000mm in x in the task frame, the position
+	of x will be out by 2.626% of the overall move distance, but also moving 
+	in x only will also push y off course by 22.8%, hense the code below
+	which add a correction factor to each term. 
+	'''
+	
+	# Here, I'm trying to get back the move command issued to the robot from the baseframe.
+	# I think it would be useful to easily get the robot position in task space. 
+	
+	
+	'''This snippit takes the home position in the robot's 
+	frame, adds the move performed, subtracts the correction 
+	factor for its own dirtection, then subtracts the
+	corrction factor for the orthogonal direction. (6.5deg)
+	'''
+	baseframe_x = (((home_pos_x + x_interval)*1000 - (26.28*x_interval))) - (228*y_interval)
+	baseframe_y = (((home_pos_y + y_interval)*1000 - (26.28*y_interval))) + (228*x_interval)
+
+	print "pose_x = ", x
+	print "pose_y = ", y
+	print ""
+
+	print "offset_pose_x =", offset_pose_x
+	print "offset_pose_y", offset_pose_y
+	print ""
+
+
+	print "baseframe_x", baseframe_x
+	print "baseframe_y", baseframe_y
+	print""
+
+	theta = np.radians(13)
+	c, s = np.cos(theta), np.sin(theta)
+	j = np.array(((c,s), (s, -c)))
+	pprint(j)
+	print""
+
+	
+	m = np.dot(j, [0.25,-0.25])
+
+	pprint(m)
+	print""
+
+	
+
+def task_to_base((x,y)= (0,0)):
+
+	points = (x,y)
+	x = points[0]
+	y = points[1]
+
+	home_pos_x = 0.3
+	home_pos_y = -0.65
+
+
+	theta = np.radians(13.2)
+	origin = 0, 0
+	#x = 0
+	if x == 0:
+		point = 0.25, -0.25
+	else:
+		
+		point = x, y
+
+	ox, oy = origin
+	px, py = point
+
+	qx = ox + math.cos(theta) * (px - ox) - math.sin(theta) * (py - oy)
+	qy = oy + math.sin(theta) * (px - ox) + math.cos(theta) * (py - oy)
+
+	qx = qx + home_pos_x
+	qy = qy + home_pos_y
+	return qx, qy
+
+    
+    #Rotate a point counterclockwise by a given theta around a given origin.
+
+    #The theta should be given in radians.
+   
+	
+
+
+
+
+def base_to_task(x=0, y=0):
+    """
+    Rotate a point counterclockwise by a given theta around a given origin.
+
+    The theta should be given in radians.
+    """
+    theta = np.radians(13.2)
+    origin = 0.3, -0.65
+    point = x, y
+
+    ox, oy = origin
+    px, py = point
+
+    qx = ox + math.cos(theta) * (px - ox) + math.sin(theta) * (py - oy)
+    qy = oy + math.sin(theta) * (px - ox) - math.cos(theta) * (py - oy)
+    
+    qx = qx - 0.3
+    qy = qy + 0.65
+    return qx, qy
+
+
+if __name__ == "__main__":
+
+	qx, qy = base_to_task(x,y)
+	print "x, y =", x ,y 
+	print ""
+	print "base to task = qx,qy = ", qx, qy
+	print ""
+
+
+	qx, qy = task_to_base((qx, qy))
+	print "task to base = qx,qy = ", qx, qy
+	print ""
+	
