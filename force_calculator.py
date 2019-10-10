@@ -8,9 +8,33 @@ import cPickle as pickle
 import goal_calc as goal
 
 
-def force_calc(length = 0, angle_deg = 0):
+def beam_adjust():
 
-	print "Starting force_calc"
+	print ""
+	print "Starting Beam Adjust"
+	with open('pickle_send.pickle', "rb") as file2:  
+		pickle_out = pickle.load(file2)
+
+	L_1, pull_angle = pickle_out
+	print "pull_angle", pull_angle
+	print "L_1", L_1
+	L_1 = L_1 + 0.05
+	pull_angle = pull_angle - 10.0
+
+	pickel_send = L_1, pull_angle 
+	with open('pickle_send.pickle', "wb") as file2:
+		pickle.dump(pickel_send, file2, -1)
+
+	force = force_calc(L_1, pull_angle)
+	print ""
+	print ""
+	return force
+
+
+
+def force_calc(L_1 = 0.0, pull_angle = 0.0):
+	print ""
+	print "Starting force_calc with L_1", L_1, " pull_angle", pull_angle
 	#with open('pickle_file.pickle', "rb") as file:  # x and y values only, need to propend to full robot state.
 		#pickle_out = pickle.load(file)
 
@@ -45,15 +69,32 @@ def force_calc(length = 0, angle_deg = 0):
 	if the goal (or any other state) force is still too high, the bean length needs to 
 	be increased further in step one, and the whole trajectory ran again.
 	'''
+	if L_1 == 0.0:
+		L_1, pull_angle, x ,y, next_x_rel, next_y_rel= next_state.state_calc()
 
-	length, angle_deg = next_state.state_calc()
+ 
 
-	length = length	
-	angle_deg = angle_deg
+	# elif length == 1.0:
+	# 	with open('pickle_send.pickle', "rb") as file2:  
+	# 		pickle = pickle.load(file2)
 
-	
-	pull_angle = angle_deg
-	L_1 = length # distance from applied load to hole.
+	# 	L_1, pull_angle = pickle
+	# 	print "pull_anglexx", pull_angle
+	# 	print "L_1xx", L_1
+	# else:
+	# 	print "From beam adjust"
+
+	 # x_goal and y_goal are to back propergate the oeriginal goal x,y to get_values
+	print "pull_anglezzz", pull_angle
+	print "L_1zzz", L_1
+
+
+
+
+
+
+	#pull_angle = angle_deg
+	#L_1 = length # distance from applied load to hole.
 	#pull_angle = 60 #angle of pull in degrees
 	Y = 35e6 #Young's modulus of elasticity for soft pvc
 	I =  2.2e-9 #m^4  #6.55e-10???? #11.5mm hose, 7e-10 #16mm hose 2.2e-9    # #2nd moment of area m^4   5.105e-11 #6mm hose
@@ -106,11 +147,15 @@ def force_calc(length = 0, angle_deg = 0):
 
 	force = (mass*acceleration + sum_f*mu)/np.cos(rec_pull_angle) #Dynamic force
 
-	print "Force = ", force, "N"
+	print "Return Force = ", force, "N"
 
-	print "End of force_calc"
-	return force
+	pickel_file = L_1,pull_angle
+	with open('pickle_L_1_pull_angle.pickle', "wb") as file3:
+		pickle.dump(pickel_file, file3, -1)
+
 	
+
+	return force
 
 if __name__ == '__main__':
 	force = force_calc()

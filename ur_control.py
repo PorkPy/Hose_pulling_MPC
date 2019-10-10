@@ -2,6 +2,7 @@
 #Echo client program
 import socket
 import command
+import ur_data as ur
 
 import time
 HOST = "123.124.125.11"   # The remote host
@@ -68,17 +69,92 @@ nextmoves = command.robotmove_intervals()
 #move = ("movel(p[0,0.1,0,0,0,0],a=0.1,v=0.1)" + "force_mode(p[0.0,0.0,0.0,0.0,0.0,0.0], [0, 0, 0, 0, 0, 1], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 2, [0.1, 0.1, 0.1, 0.35, 0.35, 0.60])" + "\n")
 #s.send(move)
 
-s.send ("set_gravity([0.0, 0.0, 9.82])" + "\n")
+
+i = 1
+bob = len(nextmoves)
+# s.send("set_gravity([0.0, 0.0, 9.82])" + "\n")
+# s.send("set_payload(1.8, [0,0,.3])" + "\n")
 for i in range(len(nextmoves)):
 	
 	[x,y,z,Rx,Ry,Rz] = nextmoves[i]
 	nextmove = [x,y,z,Rx,Ry,Rz]
-	move = ("def myProg():" + "\n" "set_payload(1.0, [0,0,.3])" "\n" + "force_mode(tool_pose(), [0, 0, 0, 0, 0, 1], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 2, [0.01, 0.01, 0.01, 0.1, 0.1, 60])" + "\n" + "movel(pose_add(get_actual_tool_flange_pose(),p %s),a=0.2,v=0.25)" % nextmove + "\n" + "sleep(30)" + "\n" + "end" + "\n")
+	move =(("def myProg():" + "\n" + \
+		"force_mode_set_damping(0.01)" + "\n" + \
+		"set_gravity([0.0, 0.0, 9.82])" + "\n" + \
+		"set_payload(1.8, [0,0,.3])" + "\n" + \
+		"force_mode(tool_pose(), [0, 0, 0, 0, 0, 1], [0.0, 0.0, 0.0, 0.0, 0.0, -0.5], 2, [0.1, 0.1, 0.1, 0.5, 0.5, 60.0])" + "\n" + \
+		"movej(p%s,a=0.2,v=0.25)" % nextmove + "\n" + "end" + "\n" ))
 	s.send(move)
-	time.sleep(0.5)
+	time.sleep(2.5)
+
+	
+	# print "pos =", pos
+	# x = pos[0]
+	# y = pos[1]
+
+	# qx, qy = ur.base_to_task(x,y)
+	# print ""
+	# print "pos_x = ", qx
+	# print "pos_y = ", qy
+	# print ""
+	# move2 = ("def myProg():" + "\n" + "force_mode(tool_pose(), [0, 0, 0, 0, 0, 0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 2, [0.01, 0.01, 0.01, 0.05, 0.05, 0.05])" + "\n" + "movel(pose_add(p[0,0,0.062,0,0,0],get_actual_tcp_pose()),a=0.2,v=0.25)" + "\n" + "sleep(30)" + "\n" + "end" + "\n")
+	# s.send(move2)
+	print "Remaining Moves: ", bob
+	bob -= 1
+	time.sleep(0.2)
+
+# time.sleep(5)
+# move = "movel(pose_add(get_forward_kin(),p[0.0,0,0,0,0, -3.141]),a=0.2,v=0.25)" + "\n"
+# s.send(move)
+# time.sleep(3)
+
+# move = "movel(pose_add(get_forward_kin(),p[0.0,0.05,0,0,0,0]),a=0.2,v=0.25)" + "\n"
+# s.send(move)
+# time.sleep(3)
+# print "move", move
+
+
 
 	#s.send("def myProg():" + "\n" + "force_mode(p[0.0,0.0,0.0,0.0,0.0,0.0], [0, 0, 0, 0, 0, 1], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 2, [0.1, 0.1, 0.1, 20.0, 20.0, 60])" + "\n" + "movel(pose_trans(get_actual_tcp_pose(),p[0.3,0.0,0,0,0,0]),a=0.1,v=0.1)" + "\n" + "sleep(30)" + "\n" + "end" + "\n")
-s.send ("end_force_mode()" + "\n")
+#s.send ("end_force_mode()" + "\n")
+#print index
+
+# index_moves = [list(i) for i in index]
+
+# zeros = [0,0,0,0,]
+
+# for i in range(len(index_moves)):
+# 		index_moves[i].extend(zeros)
+
+# index_move_1 = index_moves[0]
+# index_move_2 = index_moves[1]
+# index_move_3 = index_moves[2]
+
+# # move = (("def myProg():" + "\n" + "sleep(0.2)" + "\n" + \
+# # 		"set_gravity([0.0, 0.0, 9.82])" + "\n" + "sleep(0.2)" + "\n" +\
+# # 		"set_payload(1.5, [0,0,.3])" + "\n" + \
+# # 		"force_mode(tool_pose(), [0, 0, 0, 0, 0, 0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 2, [0.01, 0.01, 0.01, 0.05, 0.05, 0.05])" + "\n" + "sleep(0.2)" + "\n" +\
+# # 		"movec(p %s, %s, a=0.2, v=0.25, r=0.05, mode=1)" % (index_move_2, index_move_3) + "end" + "\n"))
+
+# move = "movec(p%s, p%s, a=0.2, v=0.25, r=0.05, mode=1)" % (index_move_2, index_move_3) + "\n"
+# print move 
+
+
+# s.send(move)
+
+
+# print index_move_1
+# print index_move_2
+# print index_move_3
+
+
+
+
+
+
+
+
+
 
 # time.sleep(0.2)
 # #s.send("sleep(0.2)")
