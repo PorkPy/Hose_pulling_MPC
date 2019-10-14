@@ -18,8 +18,10 @@ def beam_adjust():
 	L_1, pull_angle = pickle_out
 	print "pull_angle", pull_angle
 	print "L_1", L_1
-	L_1 = L_1 + 0.05
-	pull_angle = pull_angle - 10.0
+
+	
+	L_1 = L_1 + 0.001
+	pull_angle = pull_angle - 1.0
 
 	pickel_send = L_1, pull_angle 
 	with open('pickle_send.pickle', "wb") as file2:
@@ -85,13 +87,18 @@ def force_calc(L_1 = 0.0, pull_angle = 0.0):
 	# 	print "From beam adjust"
 
 	 # x_goal and y_goal are to back propergate the oeriginal goal x,y to get_values
-	print "pull_anglezzz", pull_angle
-	print "L_1zzz", L_1
+	print "pull_angle in force calc", pull_angle
+	print "distance in force calc", L_1
 
+	angle = pull_angle
+	if angle > 270:
+		angle = 360 - angle
+	elif angle > 180:
+		angle = angle - 180
+	# elif angle > 90:
+	# 	angle = angle - 90
 
-
-
-
+	pull_angle = angle
 
 	#pull_angle = angle_deg
 	#L_1 = length # distance from applied load to hole.

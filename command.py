@@ -20,6 +20,7 @@ def robot_command(x_current, y_current):
 	print ""
 	print "Starting robot_command"
 	print "next_x_rel", x_current
+	print "next_y_rel", y_current
 	'''
 	As state_calc function has already been invoked, we can get picked values.
 	We need x and y values for the next state in order to build a robot move 
@@ -145,8 +146,7 @@ def get_values():
 		with open("pickle_xy.pickle", "wb") as file8:
 			pickle.dump(xy_intervals, file8, -1)
 
-	next_y_rel = np.abs(next_y_rel)
-	y_goal = np.abs(y_goal)
+	
 	x_error = x_goal - next_x_rel
 	y_error = y_goal - next_y_rel
 
@@ -157,10 +157,20 @@ def get_values():
 	with open('pickle_send.pickle', "rb") as file1:
 		polar_rad, polar_angle = pickle.load(file1)
 	
+	
+
+	x_error = np.abs(x_error)
+	y_error = np.abs(y_error)
+
+	print "x_error", x_error
+	print "y_error", y_error
+	print "before loop next x rel", next_x_rel, next_y_rel
 	i = 1
 	
 	# while the robot is not at the goal, loop throght finding the next iterative step.
-	while ( x_error>0.01): #or y_error not in range(0, 10)): #or (y_error not in range(-0.5,0.5)):
+	while x_error > 0.05 or y_error > 0.05: 
+
+		print "error", x_error, y_error
 
 		if x_error <= 0:
 			break
@@ -168,16 +178,12 @@ def get_values():
 		if i ==100:
 			break
 
-		# if next_x_rel < -0.6 or next_x_rel > 0.6:
-		# 	print "x break"
-		# 	break
-		# if next_y_rel < -0.6 or next_y_rel > 0.6:
-		# 	print "y break"
-		# 	break
+		
 
 		#while i < 5:
 		print "restart while loop"
 		print " polar_angle", polar_angle, "polar_rad", polar_rad
+
 
 		force_prediction = force_calculator.force_calc(polar_rad, polar_angle)
 
@@ -188,13 +194,16 @@ def get_values():
 			robot_command(next_x_rel, next_y_rel)
 		else:
 			# if force is too large invoke beam_adjust to find new beam length and lower force.
-			while force_prediction > max_force:
+			
+			if np.abs(next_x_rel) < np.abs(x_goal): 
 
-				force = force_calculator.beam_adjust()
-				print "force step = ", force
-				force_prediction = force
+				while force_prediction > max_force:
 
-			print "final force = ", force
+					force = force_calculator.beam_adjust()
+					print "force step = ", force
+					force_prediction = force
+
+				print "final force = ", force
 			# again, is force is ok, invoke robot_command to save new (x,y)
 		
 
@@ -206,15 +215,18 @@ def get_values():
 			L_1, pull_angle = pickle_out
 
 			# Using new angle and distance; get new x,y for next iterative move.
-			x_current, y_current = goal.goal_pos_calc(pull_angle, L_1)
+			next_x_rel, next_y_rel = goal.goal_pos_calc(pull_angle, L_1)
 			
 			# invoke robot_command to save append latest x,y step.
 			
-			robot_command(x_current, y_current)
+			robot_command(next_x_rel, next_y_rel)
 
 		# Now with the current low force x,y saved, start over to find the next xy.
 		e = 1 # Used to swith offset function on/off in next_state
 		# We input the current x,y into state_calc and get a new iterative step x,y out.
+
+		print " next_x_rel", next_x_rel
+		print "next_y_rel", next_y_rel
 		polar_rad, polar_angle, x_current,y_current, next_x_rel, next_y_rel= next_state.state_calc(e, \
 			next_x_rel, \
 			next_y_rel, \
@@ -228,8 +240,7 @@ def get_values():
 		y_error = y_goal - next_y_rel
 		
 
-		print "x_error", x_error
-		print "y_error", y_error
+		
 
 		
 
@@ -238,6 +249,10 @@ def get_values():
 		print ""
 		print ""
 
+		x_error = np.abs(x_error)
+		y_error = np.abs(y_error)
+		print "x_error", x_error
+		print "y_error", y_error
 
 	print "goal_x", x_goal
 	print "goal_y", y_goal
@@ -248,26 +263,7 @@ def get_values():
 	with open("pickle_append.pickle",  "rb") as file4:
 			intervals = pickle.load(file4)
 
-	#print "intervals", intervals
-
 	
-	# need to indent this block depending on wheather the robot is 
-	#moving at each step or not. Otherwise ur_control wont get any data until get_values returns.
-	# if nextmove is not None:
-
-	# 	print "Return Next Move", nextmove
-	# 	# return nexmove list to ur_control to move robot.
-	# 	return nextmove 
-	# else:
-		
-	# 	print "Force is too high"
-
-
-	# robot_moves = []
-	# #robot_moves = [i[0] for i in intervals]
-	# for i in intervals:
-	# 	(x,y)  = ur.task_to_base(i)
-	# 	robot_moves.append((x,y))
 
 	return intervals
 
@@ -277,8 +273,7 @@ def robotmove_intervals():
 	
 
 
-	print "intervals ="
-	pprint(intervals) 
+	#pprint(intervals) 
 
 
 	robot_moves = [list(i) for i in intervals]
@@ -286,57 +281,37 @@ def robotmove_intervals():
 	
 	#pprint(robot_moves)
 
-	for i in range(len(robot_moves)):
-		robot_moves[i][1] = - robot_moves[i][1]
+	# for i in range(len(robot_moves)):
+	# 	robot_moves[i][1] = - robot_moves[i][1]
 
 	
+		
 	#pprint(robot_moves)
+	del robot_moves[0]
 
 
 	robot_moves = [tuple(i) for i in robot_moves]
 
-	
-	#pprint(robot_moves)
+	print "robot_moves"
+	pprint(robot_moves)
 
 	robot_moves_offset =[]
 	for i in robot_moves:
 		(x,y)  = ur.task_to_base(i)
 		robot_moves_offset.append((x,y))
 
-	print "offset moves"
-	pprint(robot_moves_offset)
-
 
 	robot_movesx = [list(i) for i in robot_moves_offset]
 
 	del robot_movesx[0]
 
-	
-	
-
-	
-	#pprint(robot_movesx)
-
-
-
-
-
-	# fig = plt.figure()
-	# data = np.array(intervals)
-
-	# axes = plt.gca()
-	# axes.set_xlim([0,1.5])
-	# axes.set_ylim([1.5,0])
-	# x, y = data.T
-	# plt.scatter(x,y)
-	# plt.show()
-	# plt.close(fig)
-
+	print "offset moves"
+	pprint(robot_movesx)
 
 
 	plt.ion()	
 	fig = plt.figure()
-	data = np.array(robot_movesx)
+	data = np.array(robot_moves)
 	#plt.figure(num='Task Frame Moves')
 	plt.title('Task Frame Moves')
 	plt.xlabel('x')

@@ -17,6 +17,8 @@ import force_calculator as f
 	'''
 
 def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
+	#the argument x_current is the next_x_rel which is the next 
+	#position from which the future positions should be calculated.
 	print ""
 	print "Starting state_calc"
 
@@ -68,8 +70,9 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	'''
 	
 	opposite = x_goal - current_pos_x # opposite
+	#opposite = np.abs(opposite)
 	adjacent = y_goal - current_pos_y # adjacent
-
+	#adjacent = np.abs(adjacent)
 	print "x_goal", x_goal, "y_goal", y_goal
 
 	print "opposite", opposite
@@ -97,9 +100,29 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	polar_angle = np.arctan(x/y) # in radians.
 	polar_angle = polar_angle *(180/np.pi) # convert rad to deg.
 	print "polar anglexxx", polar_angle
+	polar_angle = np.abs(polar_angle)
+	
+
+
+	# using  < symbol cus y values are positive due to tan() 
+	# opperation in goal_calc. 
+	if y_goal > y_current and x_goal < x_current:
+		polar_angle = 180 + polar_angle
+
+
+	elif y_current < y_goal and x_goal > x_current:
+		polar_angle = 180 - polar_angle 
+
+	elif x_goal < x_current and y_goal < y_current:
+		polar_angle = 360 - polar_angle
+
+	print "adusted polar angle", polar_angle
+
+
+
 
 	# segment the hypotenuse into 10mm intervals.
-	interval =  0.05 #10mm interval  #polar_rad
+	interval =  0.1 #10mm interval  #polar_rad
 	
 		
 
@@ -139,8 +162,18 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	# x_rel = next_x_relative_to_orifice
 	print "current_pos_x", current_pos_x
 	print "current_pos_y", current_pos_y
-	next_x_rel = current_pos_x + x
-	next_y_rel = current_pos_y + y
+
+	if np.abs(x_goal) > np.abs(x_current):
+		next_x_rel = current_pos_x + x
+	else:
+		next_x_rel = current_pos_x - x
+
+
+	if y_goal > y_current:
+		next_y_rel = current_pos_y - y
+	else:
+		next_y_rel = current_pos_y + y
+
 	#next_y_rel = np.abs(next_y_rel)
 	print "next_x_reletive to orifice", next_x_rel
 	print "next_y_reletive to orifice", next_y_rel
@@ -161,6 +194,26 @@ def state_calc(e = 0, x_current = 0, y_current = 0, x_goal = 0, y_goal = 0):
 	polar_angle = np.arctan(next_x_rel/next_y_rel) # in radians.between orifice and iterative step.
 	polar_angle = polar_angle *(180/np.pi) # convert rad to deg.
 
+
+
+	polar_angle = np.abs(polar_angle)
+	
+
+
+	# using  < symbol cus y values are positive due to cos() 
+	# opperation in goal_calc. 
+
+	if y_goal > next_y_rel and x_goal < next_x_rel:
+		polar_angle = 180 + polar_angle
+
+
+	elif next_y_rel < y_goal and x_goal > next_x_rel:
+		polar_angle = 180 - polar_angle 
+
+	elif x_goal < next_x_rel and y_goal < next_y_rel:
+		polar_angle = 360 - polar_angle
+
+	print "adusted polar angle2", polar_angle
 		
 	# Pickle everything to avoid circular feferences.
 	pickel_goal = x_goal, y_goal #persistant goal values

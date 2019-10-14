@@ -1,4 +1,5 @@
 import numpy as np
+import cPickle as pickle
 
 
 def user_input():
@@ -26,11 +27,10 @@ def goal_pos_calc(angle = 0, distance = 0):
 	
 		'''angle 45deg and distance 1.414m should return x and y values of 1m'''
 	# create a dictionary called goal.
-	goal = {}
+	
 
 	#initiate dict keys, "angle" and "distance",
-	goal["angle "]= angle 
-	goal["distance"] = distance
+	
 
 	# If called empty: find the x and y coordinates of the goal position using trig.
 	# If called full: find x,y of new iterative step.
@@ -39,10 +39,17 @@ def goal_pos_calc(angle = 0, distance = 0):
 	y = distance*np.cos(angle) # adjasent side y. 6/arcsin = x
 	#y = y*(-1)
 	
+	print ""
 	print "oppersite", x
 	print "adjacent", y
 
+	
+	y = np.sqrt(y**2)
+	y = y*(-1)
 
+	print "y = ", y
+
+	
 	if __name__ == '__main__':
 		print "x =", x, "y =", y
 	
@@ -57,6 +64,6 @@ def goal_pos_calc(angle = 0, distance = 0):
 	'''
 	
 
-# if __name__ == '__main__':
-#     x,y = goal_pos_calc()
-#     print "x =", x, "y =", y
+if __name__ == '__main__':
+    x,y = goal_pos_calc()
+    print "x =", x, "y =", y
