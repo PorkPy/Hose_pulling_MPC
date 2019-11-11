@@ -8,9 +8,42 @@ import cPickle as pickle
 import goal_calc as goal
 
 
-def force_calc(length = 0, angle_deg = 0):
+def beam_adjust():
 
-	print "Starting force_calc"
+	print ""
+	print "Starting Beam Adjust"
+	with open('pickle_send.pickle', "rb") as file2:  
+		pickle_out = pickle.load(file2)
+
+	L_1, pull_angle = pickle_out
+	print "pull_angle", pull_angle
+	print "L_1", L_1
+
+	
+	L_1 = L_1 + 0.01
+	if pull_angle > 80:
+		pull_angle = pull_angle - 0.4 #coef for large angles
+
+	elif pull_angle > 60:	
+		pull_angle = pull_angle - 0.2
+	else:
+		pull_angle = pull_angle - 0.1
+
+
+	pickel_send = L_1, pull_angle 
+	with open('pickle_send.pickle', "wb") as file2:
+		pickle.dump(pickel_send, file2, -1)
+
+	force = force_calc(L_1, pull_angle)
+	print ""
+	print ""
+	return force
+
+
+
+def force_calc(L_1 = 0.0, pull_angle = 0.0):
+	print ""
+	print "Starting force_calc with L_1", L_1, " pull_angle", pull_angle
 	#with open('pickle_file.pickle', "rb") as file:  # x and y values only, need to propend to full robot state.
 		#pickle_out = pickle.load(file)
 
@@ -45,25 +78,47 @@ def force_calc(length = 0, angle_deg = 0):
 	if the goal (or any other state) force is still too high, the bean length needs to 
 	be increased further in step one, and the whole trajectory ran again.
 	'''
+	if L_1 == 0.0:
+		L_1, pull_angle, x ,y, next_x_rel, next_y_rel= next_state.state_calc()
 
-	length, angle_deg = next_state.state_calc()
+ 
 
-	length = length	
-	angle_deg = angle_deg
+	# elif length == 1.0:
+	# 	with open('pickle_send.pickle', "rb") as file2:  
+	# 		pickle = pickle.load(file2)
 
-	
-	pull_angle = angle_deg
-	L_1 = length # distance from applied load to hole.
+	# 	L_1, pull_angle = pickle
+	# 	print "pull_anglexx", pull_angle
+	# 	print "L_1xx", L_1
+	# else:
+	# 	print "From beam adjust"
+
+	 # x_goal and y_goal are to back propergate the oeriginal goal x,y to get_values
+	print "pull_angle in force calc", pull_angle
+	print "distance in force calc", L_1
+
+	angle = pull_angle
+	if angle > 270:
+		angle = 360 - angle
+	elif angle > 180:
+		angle = angle - 180
+	# elif angle > 90:
+	# 	angle = angle - 90
+
+	pull_angle = angle
+
+	#pull_angle = angle_deg
+	#L_1 = length # distance from applied load to hole.
 	#pull_angle = 60 #angle of pull in degrees
 	Y = 35e6 #Young's modulus of elasticity for soft pvc
 	I =  2.2e-9 #m^4  #6.55e-10???? #11.5mm hose, 7e-10 #16mm hose 2.2e-9    # #2nd moment of area m^4   5.105e-11 #6mm hose
 	#L_1 = 0.1 #distance between fulcrum and effort
 	L_2 = 0.01 #distance detween fulcrum and load
 	mu = 1 #coefficient of friction, normally 0.2 for polymers on steel
-	hose_dia = 0.16 #hose diameter in mm 11.5 or 16
-	hole_dia = 0.2#hole diameter in mm, 17, 18, 19, 20
-	hole_thk = 0.10 #hole thickness in mm, always 10mm
-	acceleration = 0.100 #acceleration m/s^2
+	hose_dia = 0.016 #hose diameter in mm 11.5 or 16
+	hole_dia = 0.02#hole diameter in mm, 17, 18, 19, 20
+	hole_thk = 0.010 #hole thickness in mm, always 10mm
+	acceleration = 0.100 #acceleration m/s^2 n
 
 
 	#calculate angle of interference 
@@ -77,13 +132,15 @@ def force_calc(length = 0, angle_deg = 0):
 		rec_pull_angle = 0
 
 	if pull_angle > int_angle_deg: # this is to take away the friction when the hole is not cutting into the hose
-		mu=1
+		mu=0.5
 	else:
 		mu= 0.2  # mu = 0.2 for normal friction & 0.7 with ploughing friction, derivedn erec_pull_angleperimentally
 				#ploughing friction has now been adjusted to account for contact area between circles.
 				#mu = 0.7 for 4 and 3mm clearance, 1.5 for 2mm clearance and 2 for 1mm clearance
 
 	rec_pull_angle = rec_pull_angle*(np.pi/180) #convert back to radians
+
+
 
 
 	A = (rec_pull_angle*2*Y*I)/L_1**2 #bending equ
@@ -106,11 +163,16 @@ def force_calc(length = 0, angle_deg = 0):
 
 	force = (mass*acceleration + sum_f*mu)/np.cos(rec_pull_angle) #Dynamic force
 
-	print "Force = ", force, "N"
+	print "Return Force = ", force, "N"
+	print mu
 
-	print "End of force_calc"
-	return force
+	pickel_file = L_1,pull_angle
+	with open('pickle_L_1_pull_angle.pickle', "wb") as file3:
+		pickle.dump(pickel_file, file3, -1)
+
 	
+
+	return force
 
 if __name__ == '__main__':
 	force = force_calc()

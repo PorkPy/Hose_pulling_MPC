@@ -3,12 +3,15 @@ import socket
 import time
 import struct
 import cPickle as pickle
+import numpy as np
+from pprint import pprint
+import math
 
 HOST = "123.124.125.11" # The remote host
 PORT_30003 = 30003
 
 def where_now():
-
+	print ""
 	print "Starting where_now"
 
 	count = 0
@@ -75,8 +78,7 @@ def where_now():
 	Rz = struct.unpack('!d', packet_17.decode('hex'))[0]
 	#print "Rz = ", Rz
 
-	global pose 
-	pose = {"x": x, "y": y, "z": z, "Rx": Rx, "Ry": Ry, "Rz": Rz} 
+	
 	
 	#print pose["x"]
 
@@ -90,18 +92,100 @@ def where_now():
 	s.close()
 			# except socket.error as socketerror:
 			# 	print("Error: ", socketerror)
-
+	pose = x,y
 	with open('ur_data.pickle', "wb") as ur_file:
 		pickle.dump(pose, ur_file, -1)
 
-	print "End of where_now"
-	return pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"]
+	#y = np.abs(y)
+	return x,y
 
 
 
 
 
 if __name__ == '__main__':
-    pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"] = where_now()
-    print pose["x"],pose["y"],pose["z"],pose["Rx"],pose["Ry"],pose["Rz"]
 
+
+	print ""
+
+	x, y = where_now()
+	
+
+
+	home_pos_x = 0.3
+	home_pos_y = 0.65
+
+	
+
+	
+
+def task_to_base((x,y)= (0,0)):
+
+	# points = (x,y)
+	# x = points[0]
+	# y = points[1]
+
+	# home_pos_x = 0.3
+	# home_pos_y = 0.65
+
+
+	# theta = np.radians(6.57)
+	# origin = 0, 0
+	# #x = 0
+	
+	# point = x, y
+
+	# ox, oy = origin
+	# px, py = point
+
+	# qx = ox + math.cos(theta) * (px - ox) - math.sin(theta) * (py - oy)
+	# qy = oy + math.sin(theta) * (px - ox) + math.cos(theta) * (py - oy)
+
+	qx = x + 0.0684
+	qy = y - 0.36625
+	return qx, qy
+
+    
+    #Rotate a point counterclockwise by a given theta around a given origin.
+
+    #The theta should be given in radians.
+   
+	
+
+
+
+
+def base_to_task(x=0, y=0):
+	"""
+	Rotate a point counterclockwise by a given theta around a given origin.
+	The theta should be given in radians.
+	"""
+	# theta = np.radians(6.57)
+	# origin = 0, 0
+	# point = x, y
+
+	# ox, oy = origin
+	# px, py = point
+
+	# qx = ox + math.cos(theta) * (px - ox) - math.sin(theta) * (py - oy)
+	# qy = oy + math.sin(theta) * (px - ox) + math.cos(theta) * (py - oy)
+
+	qx = x - 0.0684
+	qy = y + 0.366
+	return qx, qy
+
+	
+
+
+if __name__ == "__main__":
+
+	qx, qy = base_to_task(x,y)
+	print "x, y =", x ,y 
+	print ""
+	print "base to task = qx,qy = ", qx, qy
+	print ""
+
+
+	qx, qy = task_to_base((qx, qy))
+	print "task to base = qx,qy = ", qx, qy
+	print ""
